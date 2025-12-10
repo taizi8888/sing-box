@@ -4731,23 +4731,84 @@ if [[ ! -f /etc/s-box/sb.json ]]; then
 red "未正常启动Sing-box，请卸载重装或者选择10查看运行日志反馈" && exit
 fi
 }
+# ==========================================
+# 新增：自定义优选域名节点生成函数 (适配 argosbxj 逻辑)
+# ==========================================
+res_custom_vip(){
+    # 读取必要配置
+    uuid=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[0].users[0].uuid')
+    ws_path=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[1].transport.path')
+    
+    # 获取 Argo 域名 (优先检测固定隧道，其次临时隧道)
+    # 逻辑参考脚本原有的 argopid 检测
+    local my_domain=""
+    local node_type=""
 
+    # 检测固定隧道日志
+    if [[ -s /etc/s-box/sbargoym.log ]]; then
+        my_domain=$(cat /etc/s-box/sbargoym.log)
+        node_type="固定Argo"
+    # 检测临时隧道日志
+    elif [[ -s /etc/s-box/argo.log ]]; then
+        my_domain=$(cat /etc/s-box/argo.log | grep -a trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+        node_type="临时Argo"
+    fi
+
+    # 开始生成
+    if [[ -n "$my_domain" ]]; then
+        echo
+        white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        red "🚀【 VIP自定义优选节点 ($node_type) 】生成中..." && sleep 1
+        
+        # 清空旧文件
+        rm -rf /etc/s-box/vm_ws_vip.txt
+
+        # 循环生成 j1 - j10
+        for i in {1..10}; do
+            local add_domain="j${i}.dtsm.de5.net"
+            local ps_name="VIP-${i}-${node_type}"
+            
+            # 构建 JSON (TLS 开启模式)
+            local vmess_json="{\"add\":\"${add_domain}\",\"aid\":\"0\",\"host\":\"${my_domain}\",\"id\":\"${uuid}\",\"net\":\"ws\",\"path\":\"${ws_path}\",\"port\":\"443\",\"ps\":\"${ps_name}\",\"tls\":\"tls\",\"sni\":\"${my_domain}\",\"type\":\"none\",\"v\":\"2\"}"
+            
+            # Base64 编码
+            local vmess_link="vmess://$(echo -n "$vmess_json" | base64 -w 0)"
+            
+            # 写入文件
+            echo "$vmess_link" >> /etc/s-box/vm_ws_vip.txt
+        done
+        
+        green "已生成 10 个优选节点至订阅文件"
+        white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        echo
+    fi
+}
 sbshare(){
-rm -rf /etc/s-box/jhdy.txt /etc/s-box/vl_reality.txt /etc/s-box/vm_ws_argols.txt /etc/s-box/vm_ws_argogd.txt /etc/s-box/vm_ws.txt /etc/s-box/vm_ws_tls.txt /etc/s-box/hy2.txt /etc/s-box/tuic5.txt
-result_vl_vm_hy_tu && resvless && resvmess && reshy2 && restu5
+# 1. 清理旧文件 (增加了 vm_ws_vip.txt)
+rm -rf /etc/s-box/jhdy.txt /etc/s-box/vl_reality.txt /etc/s-box/vm_ws_argols.txt /etc/s-box/vm_ws_argogd.txt /etc/s-box/vm_ws.txt /etc/s-box/vm_ws_tls.txt /etc/s-box/hy2.txt /etc/s-box/tuic5.txt /etc/s-box/vm_ws_vip.txt
+
+# 2. 执行生成 (增加了 res_custom_vip)
+result_vl_vm_hy_tu && resvless && resvmess && reshy2 && restu5 && res_custom_vip
+
+# 3. 合并文件 (增加了 vm_ws_vip.txt)
 cat /etc/s-box/vl_reality.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/vm_ws_argols.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/vm_ws_argogd.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/vm_ws.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/vm_ws_tls.txt 2>/dev/null >> /etc/s-box/jhdy.txt
+# === 这里插入 VIP 节点 ===
+cat /etc/s-box/vm_ws_vip.txt 2>/dev/null >> /etc/s-box/jhdy.txt
+# ========================
 cat /etc/s-box/hy2.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/tuic5.txt 2>/dev/null >> /etc/s-box/jhdy.txt
+
+# 4. 生成 Base64 订阅
 baseurl=$(base64 -w 0 < /etc/s-box/jhdy.txt 2>/dev/null)
 v2sub=$(cat /etc/s-box/jhdy.txt 2>/dev/null)
 echo "$v2sub" > /etc/s-box/jh_sub.txt
 echo
 white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-red "🚀【 四合一聚合订阅 】节点信息如下：" && sleep 2
+red "🚀【 四合一聚合订阅 (已含 VIP 优选) 】节点信息如下：" && sleep 2
 echo
 echo "分享链接"
 echo -e "${yellow}$baseurl${plain}"
