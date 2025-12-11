@@ -4732,7 +4732,7 @@ red "未正常启动Sing-box，请卸载重装或者选择10查看运行日志�
 fi
 }
 # ==========================================
-# 新增：VIP优选节点生成函数
+# 【国旗+国家名】VIP优选节点生成函数
 # ==========================================
 res_custom_vip(){
     # 1. 读取基础配置
@@ -4754,17 +4754,60 @@ res_custom_vip(){
     if [[ -n "$my_domain" ]]; then
         echo
         white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        red "🚀【 VIP自定义优选节点 ($node_type) 】生成中..." && sleep 1
+        red "🚀【 VIP定制节点 ($node_type) 】生成中..."
+        
+        # --- 获取位置信息 (国旗+中文名) 开始 ---
+        # 请求 ip-api 获取中文国家名和代码
+        local ip_json=$(curl -s --max-time 5 "http://ip-api.com/json/?lang=zh-CN&fields=countryCode,country")
+        
+        # 提取数据 (依赖脚本自带的 jq)
+        local country_code=$(echo "$ip_json" | jq -r '.countryCode // empty')
+        local country_name=$(echo "$ip_json" | jq -r '.country // empty')
+        local flag_emoji=""
+
+        # 1. 生成国旗
+        if [[ -z "$country_code" ]]; then
+            flag_emoji="🌐"
+            country_name="未知地区"
+        else
+            flag_emoji=$(python3 -c "import sys; print(''.join([chr(ord(c) + 127397) for c in '$country_code']))" 2>/dev/null)
+            if [[ -z "$flag_emoji" ]]; then flag_emoji="🌐"; fi
+        fi
+        
+        # 2. 修正显示 (如果 API 没返回中文名，用代码代替)
+        if [[ -z "$country_name" ]]; then country_name="$country_code"; fi
+        
+        echo -e "当前定位：${yellow}${flag_emoji} ${country_name}${plain}" && sleep 1
+        # --- 获取位置信息 结束 ---
         
         rm -rf /etc/s-box/vm_ws_vip.txt
 
-        for i in {1..10}; do
-            local add_domain="j${i}.dtsm.de5.net"
-            local ps_name="VIP-${i}-${node_type}"
-            local vmess_json="{\"add\":\"${add_domain}\",\"aid\":\"0\",\"host\":\"${my_domain}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"443\",\"ps\":\"${ps_name}\",\"tls\":\"tls\",\"sni\":\"${my_domain}\",\"type\":\"none\",\"v\":\"2\"}"
+        # 定义端口列表
+        local port_list="443 8443 2053 2083 2087 2096 80 8080 8880 2052 2082 2086 2095"
+        local j_count=1
+
+        for port in $port_list; do
+            local add_domain="j${j_count}.dtsm.de5.net"
+            
+            # 判断 TLS
+            local tls_status=""
+            if [[ "$port" =~ ^(443|8443|2053|2083|2087|2096)$ ]]; then
+                tls_status="tls"
+            else
+                tls_status=""
+            fi
+
+            # ⚠️ 命名格式：国旗 + 国家名 + 优选 + 端口
+            # 例如: 🇺🇸 美国 优选443
+            local ps_name="${flag_emoji} ${country_name} 优选${port}"
+            
+            local vmess_json="{\"add\":\"${add_domain}\",\"aid\":\"0\",\"host\":\"${my_domain}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"${port}\",\"ps\":\"${ps_name}\",\"tls\":\"${tls_status}\",\"sni\":\"${my_domain}\",\"type\":\"none\",\"v\":\"2\"}"
+            
             echo "vmess://$(echo -n "$vmess_json" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
+            j_count=$((j_count+1))
         done
-        green "已注入 10 个优选节点"
+        
+        green "已注入 ${country_name} 优选节点！"
     fi
 }
 sbshare(){
