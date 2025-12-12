@@ -1259,9 +1259,9 @@ cat > /etc/s-box/sing_box_client.json <<EOF
     {
       "type": "tun",
            "tag": "tun-in",
-	  "address": [
+      "address": [
       "172.19.0.1/30",
-	  "fd00::1/126"
+      "fd00::1/126"
       ],
       "auto_route": true,
       "strict_route": true,
@@ -1867,9 +1867,9 @@ cat > /etc/s-box/sing_box_client.json <<EOF
     {
       "type": "tun",
            "tag": "tun-in",
-	  "address": [
+      "address": [
       "172.19.0.1/30",
-	  "fd00::1/126"
+      "fd00::1/126"
       ],
       "auto_route": true,
       "strict_route": true,
@@ -2173,7 +2173,7 @@ proxies:
   servername: $vl_name                 
   reality-opts: 
     public-key: $public_key    
-    short-id: $short_id                      
+    short-id: $short_id                    
   client-fingerprint: chrome                  
 
 - name: vmess-ws-$hostname                         
@@ -2191,6 +2191,10 @@ proxies:
     path: "$ws_path"                             
     headers:
       Host: $vm_name                     
+
+
+
+
 
 - name: hysteria2-$hostname                            
   type: hysteria2                                      
@@ -2217,46 +2221,6 @@ proxies:
   sni: $tu5_name                                
   skip-cert-verify: $tu5_ins
 
-
-
-
-
-
-
-
-
-- name: vmess-tls-argo临时-$hostname                         
-  type: vmess
-  server: $vmadd_argo                        
-  port: 8443                                     
-  uuid: $uuid       
-  alterId: 0
-  cipher: auto
-  udp: true
-  tls: true
-  network: ws
-  servername: $argo                    
-  ws-opts:
-    path: "$ws_path"                             
-    headers:
-      Host: $argo
-
-- name: vmess-argo临时-$hostname                         
-  type: vmess
-  server: $vmadd_argo                        
-  port: 8880                                     
-  uuid: $uuid       
-  alterId: 0
-  cipher: auto
-  udp: true
-  tls: false
-  network: ws
-  servername: $argo                    
-  ws-opts:
-    path: "$ws_path"                             
-    headers:
-      Host: $argo 
-
 proxy-groups:
 - name: 负载均衡
   type: load-balance
@@ -2268,8 +2232,6 @@ proxy-groups:
     - vmess-ws-$hostname
     - hysteria2-$hostname
     - tuic5-$hostname
-    - vmess-tls-argo临时-$hostname
-    - vmess-argo临时-$hostname
 
 - name: 自动选择
   type: url-test
@@ -2281,8 +2243,6 @@ proxy-groups:
     - vmess-ws-$hostname
     - hysteria2-$hostname
     - tuic5-$hostname
-    - vmess-tls-argo临时-$hostname
-    - vmess-argo临时-$hostname
     
 - name: 🌍选择代理节点
   type: select
@@ -2294,8 +2254,6 @@ proxy-groups:
     - vmess-ws-$hostname
     - hysteria2-$hostname
     - tuic5-$hostname
-    - vmess-tls-argo临时-$hostname
-    - vmess-argo临时-$hostname
 rules:
   - GEOIP,LAN,DIRECT
   - GEOIP,CN,DIRECT
@@ -2385,9 +2343,9 @@ cat > /etc/s-box/sing_box_client.json <<EOF
     {
       "type": "tun",
      "tag": "tun-in",
-	  "address": [
+      "address": [
       "172.19.0.1/30",
-	  "fd00::1/126"
+      "fd00::1/126"
       ],
       "auto_route": true,
       "strict_route": true,
@@ -2691,464 +2649,6 @@ proxies:
   servername: $vl_name                 
   reality-opts: 
     public-key: $public_key    
-    short-id: $short_id                      
-  client-fingerprint: chrome                  
-
-- name: vmess-ws-$hostname                         
-  type: vmess
-  server: $vmadd_local                        
-  port: $vm_port                                     
-  uuid: $uuid       
-  alterId: 0
-  cipher: auto
-  udp: true
-  tls: $tls
-  network: ws
-  servername: $vm_name                    
-  ws-opts:
-    path: "$ws_path"                             
-    headers:
-      Host: $vm_name                     
-
-- name: hysteria2-$hostname                            
-  type: hysteria2                                      
-  server: $cl_hy2_ip                               
-  port: $hy2_port                                
-  password: $uuid                          
-  alpn:
-    - h3
-  sni: $hy2_name                               
-  skip-cert-verify: $hy2_ins
-  fast-open: true
-
-- name: tuic5-$hostname                            
-  server: $cl_tu5_ip                      
-  port: $tu5_port                                    
-  type: tuic
-  uuid: $uuid       
-  password: $uuid   
-  alpn: [h3]
-  disable-sni: true
-  reduce-rtt: true
-  udp-relay-mode: native
-  congestion-controller: bbr
-  sni: $tu5_name                                
-  skip-cert-verify: $tu5_ins
-
-
-
-
-
-
-
-- name: vmess-tls-argo固定-$hostname                         
-  type: vmess
-  server: $vmadd_argo                        
-  port: 8443                                     
-  uuid: $uuid       
-  alterId: 0
-  cipher: auto
-  udp: true
-  tls: true
-  network: ws
-  servername: $argogd                    
-  ws-opts:
-    path: "$ws_path"                             
-    headers:
-      Host: $argogd
-
-- name: vmess-argo固定-$hostname                         
-  type: vmess
-  server: $vmadd_argo                        
-  port: 8880                                     
-  uuid: $uuid       
-  alterId: 0
-  cipher: auto
-  udp: true
-  tls: false
-  network: ws
-  servername: $argogd                    
-  ws-opts:
-    path: "$ws_path"                             
-    headers:
-      Host: $argogd
-
-proxy-groups:
-- name: 负载均衡
-  type: load-balance
-  url: https://www.gstatic.com/generate_204
-  interval: 300
-  strategy: round-robin
-  proxies:
-    - vless-reality-vision-$hostname                              
-    - vmess-ws-$hostname
-    - hysteria2-$hostname
-    - tuic5-$hostname
-    - vmess-tls-argo固定-$hostname
-    - vmess-argo固定-$hostname
-
-- name: 自动选择
-  type: url-test
-  url: https://www.gstatic.com/generate_204
-  interval: 300
-  tolerance: 50
-  proxies:
-    - vless-reality-vision-$hostname                              
-    - vmess-ws-$hostname
-    - hysteria2-$hostname
-    - tuic5-$hostname
-    - vmess-tls-argo固定-$hostname
-    - vmess-argo固定-$hostname
-    
-- name: 🌍选择代理节点
-  type: select
-  proxies:
-    - 负载均衡                                         
-    - 自动选择
-    - DIRECT
-    - vless-reality-vision-$hostname                              
-    - vmess-ws-$hostname
-    - hysteria2-$hostname
-    - tuic5-$hostname
-    - vmess-tls-argo固定-$hostname
-    - vmess-argo固定-$hostname
-rules:
-  - GEOIP,LAN,DIRECT
-  - GEOIP,CN,DIRECT
-  - MATCH,🌍选择代理节点
-EOF
-
-else
-cat > /etc/s-box/sing_box_client.json <<EOF
-{
-  "log": {
-    "disabled": false,
-    "level": "info",
-    "timestamp": true
-  },
-  "experimental": {
-    "clash_api": {
-      "external_controller": "127.0.0.1:9090",
-      "external_ui": "ui",
-      "external_ui_download_url": "",
-      "external_ui_download_detour": "",
-      "secret": "",
-      "default_mode": "Rule"
-       },
-      "cache_file": {
-            "enabled": true,
-            "path": "cache.db",
-            "store_fakeip": true
-        }
-    },
-    "dns": {
-        "servers": [
-            {
-                "tag": "proxydns",
-                "address": "$sbdnsip",
-                "detour": "select"
-            },
-            {
-                "tag": "localdns",
-                "address": "h3://223.5.5.5/dns-query",
-                "detour": "direct"
-            },
-            {
-                "tag": "dns_fakeip",
-                "address": "fakeip"
-            }
-        ],
-        "rules": [
-            {
-                "outbound": "any",
-                "server": "localdns",
-                "disable_cache": true
-            },
-            {
-                "clash_mode": "Global",
-                "server": "proxydns"
-            },
-            {
-                "clash_mode": "Direct",
-                "server": "localdns"
-            },
-            {
-                "rule_set": "geosite-cn",
-                "server": "localdns"
-            },
-            {
-                 "rule_set": "geosite-geolocation-!cn",
-                 "server": "proxydns"
-            },
-             {
-                "rule_set": "geosite-geolocation-!cn",         
-                "query_type": [
-                    "A",
-                    "AAAA"
-                ],
-                "server": "dns_fakeip"
-            }
-          ],
-           "fakeip": {
-           "enabled": true,
-           "inet4_range": "198.18.0.0/15",
-           "inet6_range": "fc00::/18"
-         },
-          "independent_cache": true,
-          "final": "proxydns"
-        },
-      "inbounds": [
-    {
-      "type": "tun",
-     "tag": "tun-in",
-	  "address": [
-      "172.19.0.1/30",
-	  "fd00::1/126"
-      ],
-      "auto_route": true,
-      "strict_route": true,
-      "sniff": true,
-      "sniff_override_destination": true,
-      "domain_strategy": "prefer_ipv4"
-    }
-  ],
-  "outbounds": [
-    {
-      "tag": "select",
-      "type": "selector",
-      "default": "auto",
-      "outbounds": [
-        "auto",
-        "vless-$hostname",
-        "vmess-$hostname",
-        "hy2-$hostname",
-        "tuic5-$hostname"
-      ]
-    },
-    {
-      "type": "vless",
-      "tag": "vless-$hostname",
-      "server": "$server_ipcl",
-      "server_port": $vl_port,
-      "uuid": "$uuid",
-      "flow": "xtls-rprx-vision",
-      "tls": {
-        "enabled": true,
-        "server_name": "$vl_name",
-        "utls": {
-          "enabled": true,
-          "fingerprint": "chrome"
-        },
-      "reality": {
-          "enabled": true,
-          "public_key": "$public_key",
-          "short_id": "$short_id"
-        }
-      }
-    },
-{
-            "server": "$vmadd_local",
-            "server_port": $vm_port,
-            "tag": "vmess-$hostname",
-            "tls": {
-                "enabled": $tls,
-                "server_name": "$vm_name",
-                "insecure": false,
-                "utls": {
-                    "enabled": true,
-                    "fingerprint": "chrome"
-                }
-            },
-            "packet_encoding": "packetaddr",
-            "transport": {
-                "headers": {
-                    "Host": [
-                        "$vm_name"
-                    ]
-                },
-                "path": "$ws_path",
-                "type": "ws"
-            },
-            "type": "vmess",
-            "security": "auto",
-            "uuid": "$uuid"
-        },
-
-    {
-        "type": "hysteria2",
-        "tag": "hy2-$hostname",
-        "server": "$cl_hy2_ip",
-        "server_port": $hy2_port,
-        "password": "$uuid",
-        "tls": {
-            "enabled": true,
-            "server_name": "$hy2_name",
-            "insecure": $hy2_ins,
-            "alpn": [
-                "h3"
-            ]
-        }
-    },
-        {
-            "type":"tuic",
-            "tag": "tuic5-$hostname",
-            "server": "$cl_tu5_ip",
-            "server_port": $tu5_port,
-            "uuid": "$uuid",
-            "password": "$uuid",
-            "congestion_control": "bbr",
-            "udp_relay_mode": "native",
-            "udp_over_stream": false,
-            "zero_rtt_handshake": false,
-            "heartbeat": "10s",
-            "tls":{
-                "enabled": true,
-                "server_name": "$tu5_name",
-                "insecure": $tu5_ins,
-                "alpn": [
-                    "h3"
-                ]
-            }
-        },
-    {
-      "tag": "direct",
-      "type": "direct"
-    },
-    {
-      "tag": "auto",
-      "type": "urltest",
-      "outbounds": [
-        "vless-$hostname",
-        "vmess-$hostname",
-        "hy2-$hostname",
-        "tuic5-$hostname"
-      ],
-      "url": "https://www.gstatic.com/generate_204",
-      "interval": "1m",
-      "tolerance": 50,
-      "interrupt_exist_connections": false
-    }
-  ],
-  "route": {
-      "rule_set": [
-            {
-                "tag": "geosite-geolocation-!cn",
-                "type": "remote",
-                "format": "binary",
-                "url": "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/geolocation-!cn.srs",
-                "download_detour": "select",
-                "update_interval": "1d"
-            },
-            {
-                "tag": "geosite-cn",
-                "type": "remote",
-                "format": "binary",
-                "url": "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/geolocation-cn.srs",
-                "download_detour": "select",
-                "update_interval": "1d"
-            },
-            {
-                "tag": "geoip-cn",
-                "type": "remote",
-                "format": "binary",
-                "url": "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs",
-                "download_detour": "select",
-                "update_interval": "1d"
-            }
-        ],
-    "auto_detect_interface": true,
-    "final": "select",
-    "rules": [
-      {
-      "inbound": "tun-in",
-      "action": "sniff"
-      },
-      {
-      "protocol": "dns",
-      "action": "hijack-dns"
-      },
-      {
-      "port": 443,
-      "network": "udp",
-      "action": "reject"
-      },
-      {
-        "clash_mode": "Direct",
-        "outbound": "direct"
-      },
-      {
-        "clash_mode": "Global",
-        "outbound": "select"
-      },
-      {
-        "rule_set": "geoip-cn",
-        "outbound": "direct"
-      },
-      {
-        "rule_set": "geosite-cn",
-        "outbound": "direct"
-      },
-      {
-      "ip_is_private": true,
-      "outbound": "direct"
-      },
-      {
-        "rule_set": "geosite-geolocation-!cn",
-        "outbound": "select"
-      }
-    ]
-  },
-    "ntp": {
-    "enabled": true,
-    "server": "time.apple.com",
-    "server_port": 123,
-    "interval": "30m",
-    "detour": "direct"
-  }
-}
-EOF
-
-cat > /etc/s-box/clash_meta_client.yaml <<EOF
-port: 7890
-allow-lan: true
-mode: rule
-log-level: info
-unified-delay: true
-global-client-fingerprint: chrome
-dns:
-  enable: false
-  listen: :53
-  ipv6: true
-  enhanced-mode: fake-ip
-  fake-ip-range: 198.18.0.1/16
-  default-nameserver: 
-    - 223.5.5.5
-    - 8.8.8.8
-  nameserver:
-    - https://dns.alidns.com/dns-query
-    - https://doh.pub/dns-query
-  fallback:
-    - https://1.0.0.1/dns-query
-    - tls://dns.google
-  fallback-filter:
-    geoip: true
-    geoip-code: CN
-    ipcidr:
-      - 240.0.0.0/4
-
-proxies:
-- name: vless-reality-vision-$hostname               
-  type: vless
-  server: $server_ipcl                           
-  port: $vl_port                                
-  uuid: $uuid   
-  network: tcp
-  udp: true
-  tls: true
-  flow: xtls-rprx-vision
-  servername: $vl_name                 
-  reality-opts: 
-    public-key: $public_key    
     short-id: $short_id                    
   client-fingerprint: chrome                  
 
@@ -3208,6 +2708,8 @@ proxy-groups:
     - vmess-ws-$hostname
     - hysteria2-$hostname
     - tuic5-$hostname
+    - vmess-tls-argo固定-$hostname
+    - vmess-argo固定-$hostname
 
 - name: 自动选择
   type: url-test
@@ -3219,6 +2721,8 @@ proxy-groups:
     - vmess-ws-$hostname
     - hysteria2-$hostname
     - tuic5-$hostname
+    - vmess-tls-argo固定-$hostname
+    - vmess-argo固定-$hostname
     
 - name: 🌍选择代理节点
   type: select
@@ -3230,6 +2734,8 @@ proxy-groups:
     - vmess-ws-$hostname
     - hysteria2-$hostname
     - tuic5-$hostname
+    - vmess-tls-argo固定-$hostname
+    - vmess-argo固定-$hostname
 rules:
   - GEOIP,LAN,DIRECT
   - GEOIP,CN,DIRECT
@@ -3978,83 +3484,100 @@ fi
 }
 
 gitlabsub(){
-echo
-green "请确保Gitlab官网上已建立项目，已开启推送功能，已获取访问令牌"
-yellow "1：重置/设置Gitlab订阅链接"
-yellow "0：返回上层"
-readp "请选择【0-1】：" menu
-if [ "$menu" = "1" ]; then
-cd /etc/s-box
-readp "输入登录邮箱: " email
-readp "输入访问令牌: " token
-readp "输入用户名: " userid
-readp "输入项目名: " project
-echo
-green "多台VPS共用一个令牌及项目名，可创建多个分支订阅链接"
-green "回车跳过表示不新建，仅使用主分支main订阅链接(首台VPS建议回车跳过)"
-readp "新建分支名称: " gitlabml
-echo
-if [[ -z "$gitlabml" ]]; then
-gitlab_ml=''
-git_sk=main
-rm -rf /etc/s-box/gitlab_ml_ml
-else
-gitlab_ml=":${gitlabml}"
-git_sk="${gitlabml}"
-echo "${gitlab_ml}" > /etc/s-box/gitlab_ml_ml
-fi
-echo "$token" > /etc/s-box/gitlabtoken.txt
-rm -rf /etc/s-box/.git
-git init >/dev/null 2>&1
-git add sing_box_client.json clash_meta_client.yaml jh_sub.txt >/dev/null 2>&1
-git config --global user.email "${email}" >/dev/null 2>&1
-git config --global user.name "${userid}" >/dev/null 2>&1
-git commit -m "commit_add_$(date +"%F %T")" >/dev/null 2>&1
-branches=$(git branch)
-if [[ $branches == *master* ]]; then
-git branch -m master main >/dev/null 2>&1
-fi
-git remote add origin https://${token}@gitlab.com/${userid}/${project}.git >/dev/null 2>&1
-if [[ $(ls -a | grep '^\.git$') ]]; then
-cat > /etc/s-box/gitpush.sh <<EOF
-#!/usr/bin/expect
-spawn bash -c "git push -f origin main${gitlab_ml}"
-expect "Password for 'https://$(cat /etc/s-box/gitlabtoken.txt 2>/dev/null)@gitlab.com':"
-send "$(cat /etc/s-box/gitlabtoken.txt 2>/dev/null)\r"
-interact
-EOF
-chmod +x gitpush.sh
-./gitpush.sh "git push -f origin main${gitlab_ml}" cat /etc/s-box/gitlabtoken.txt >/dev/null 2>&1
-echo "https://gitlab.com/api/v4/projects/${userid}%2F${project}/repository/files/sing_box_client.json/raw?ref=${git_sk}&private_token=${token}" > /etc/s-box/sing_box_gitlab.txt
-echo "https://gitlab.com/api/v4/projects/${userid}%2F${project}/repository/files/clash_meta_client.yaml/raw?ref=${git_sk}&private_token=${token}" > /etc/s-box/clash_meta_gitlab.txt
-echo "https://gitlab.com/api/v4/projects/${userid}%2F${project}/repository/files/jh_sub.txt/raw?ref=${git_sk}&private_token=${token}" > /etc/s-box/jh_sub_gitlab.txt
-clsbshow
-else
-yellow "设置Gitlab订阅链接失败，请反馈"
-fi
-cd
-else
-changeserv
-fi
+    # 1. 安装依赖
+    if [[ x"${release}" == x"alpine" ]]; then
+        apk add git curl
+    else
+        if [ -x "$(command -v apt-get)" ]; then
+            apt-get install -y git curl
+        elif [ -x "$(command -v yum)" ]; then
+            yum install -y git curl
+        elif [ -x "$(command -v dnf)" ]; then
+            dnf install -y git curl
+        fi
+    fi
+
+    echo
+    green "================================================="
+    green "         GitLab 自动订阅配置 (OAuth2 稳定版)"
+    green "================================================="
+    echo "说明："
+    echo "1. 这里的 项目名(Project) 必须和主服务器的 一样 (例如 dy)"
+    echo "2. 这里的 分支名(Branch) 必须和主服务器 不一样 (例如 node2)"
+    echo "-------------------------------------------------"
+    
+    mkdir -p /etc/s-box
+    readp "输入登录邮箱 (随便填): " email
+    readp "输入访问令牌 (Access Token): " token
+    readp "输入用户名 (User ID): " userid
+    readp "输入项目名 (Project Name): " project
+    readp "输入分支名称 (例如 node2): " gitlabml
+    
+    if [[ -z "$gitlabml" ]]; then
+        git_sk="main"
+    else
+        git_sk="${gitlabml}"
+    fi
+
+    # 保存配置到文件
+    echo "$email" > /etc/s-box/gl_email
+    echo "$token" > /etc/s-box/gl_token
+    echo "$userid" > /etc/s-box/gl_user
+    echo "$project" > /etc/s-box/gl_project
+    echo "$git_sk" > /etc/s-box/gl_branch
+
+    # 生成订阅链接预览 (Base64订阅)
+    echo "https://gitlab.com/api/v4/projects/${userid}%2F${project}/repository/files/jh_sub.txt/raw?ref=${git_sk}&private_token=${token}" > /etc/s-box/jh_sub_gitlab.txt
+    # 生成 Raw 节点链接 (用于主服务器融合)
+    echo "https://gitlab.com/api/v4/projects/${userid}%2F${project}/repository/files/jhdy.txt/raw?ref=${git_sk}&private_token=${token}" > /etc/s-box/jh_raw_gitlab.txt
+    
+    green "配置已保存！"
+    green "正在执行首次推送..."
+    gitlabsubgo
+    clsbshow
 }
 
 gitlabsubgo(){
-cd /etc/s-box
-if [[ $(ls -a | grep '^\.git$') ]]; then
-if [ -f /etc/s-box/gitlab_ml_ml ]; then
-gitlab_ml=$(cat /etc/s-box/gitlab_ml_ml)
-fi
-git rm --cached sing_box_client.json clash_meta_client.yaml jh_sub.txt >/dev/null 2>&1
-git commit -m "commit_rm_$(date +"%F %T")" >/dev/null 2>&1
-git add sing_box_client.json clash_meta_client.yaml jh_sub.txt >/dev/null 2>&1
-git commit -m "commit_add_$(date +"%F %T")" >/dev/null 2>&1
-chmod +x gitpush.sh
-./gitpush.sh "git push -f origin main${gitlab_ml}" cat /etc/s-box/gitlabtoken.txt >/dev/null 2>&1
-clsbshow
-else
-yellow "未设置Gitlab订阅链接"
-fi
-cd
+    if [[ -f /etc/s-box/gl_token ]]; then
+        # 读取配置
+        local email=$(cat /etc/s-box/gl_email)
+        local token=$(cat /etc/s-box/gl_token)
+        local userid=$(cat /etc/s-box/gl_user)
+        local project=$(cat /etc/s-box/gl_project)
+        local branch=$(cat /etc/s-box/gl_branch)
+
+        echo
+        green "正在推送节点到 GitLab (分支: $branch)..."
+
+        # 进入目录并重置 Git 环境
+        cd /etc/s-box
+        rm -rf .git
+        
+        # 初始化
+        git init >/dev/null 2>&1
+        git config user.email "${email}"
+        git config user.name "${userid}"
+        
+        # 切换到指定分支
+        git checkout -b "${branch}" >/dev/null 2>&1
+        
+        # 添加所有关键文件
+        # jhdy.txt = 明文节点 (给主服务器融合用)
+        # jh_sub.txt = Base64订阅 (给客户端用)
+        # sing_box_client.json 等 = 客户端配置
+        git add . >/dev/null 2>&1
+        git commit -m "Auto Update $(date '+%Y-%m-%d %H:%M:%S')" >/dev/null 2>&1
+
+        # 构造 OAuth2 URL 并强制推送
+        local remote_url="https://oauth2:${token}@gitlab.com/${userid}/${project}.git"
+        
+        if git push --force "${remote_url}" HEAD:${branch} >/dev/null 2>&1; then
+            green "GitLab 推送成功！"
+            echo "Raw节点链接(用于融合): $(cat /etc/s-box/jh_raw_gitlab.txt 2>/dev/null)"
+        else
+            red "GitLab 推送失败！请检查 Token 权限或项目名是否正确。"
+        fi
+    fi
 }
 
 clsbshow(){
@@ -4185,36 +3708,38 @@ green "然后使用任意节点打开网页https://cloudflare.com/cdn-cgi/trace�
 elif  [ "$menu" = "2" ]; then
 green "请稍等……更新中……"
 if [ -z $(curl -s4m5 icanhazip.com -k) ]; then
-curl -sSL https://gitlab.com/rwkgyg/CFwarp/raw/main/point/endip.sh -o endip.sh && chmod +x endip.sh && (echo -e "1\n2\n") | bash endip.sh > /dev/null 2>&1
-nwgip=$(awk -F, 'NR==2 {print $1}' /root/result.csv 2>/dev/null | grep -o '\[.*\]' | tr -d '[]')
-nwgpo=$(awk -F, 'NR==2 {print $1}' /root/result.csv 2>/dev/null | awk -F "]" '{print $2}' | tr -d ':')
+        curl -sSL https://gitlab.com/rwkgyg/CFwarp/raw/main/point/endip.sh -o endip.sh && chmod +x endip.sh && (echo -e "1\n2\n") | bash endip.sh > /dev/null 2>&1
+        nwgip=$(awk -F, 'NR==2 {print $1}' /root/result.csv 2>/dev/null | grep -o '\[.*\]' | tr -d '[]')
+        nwgpo=$(awk -F, 'NR==2 {print $1}' /root/result.csv 2>/dev/null | awk -F "]" '{print $2}' | tr -d ':')
+    else
+        curl -sSL https://gitlab.com/rwkgyg/CFwarp/raw/main/point/endip.sh -o endip.sh && chmod +x endip.sh && (echo -e "1\n1\n") | bash endip.sh > /dev/null 2>&1
+        nwgip=$(awk -F, 'NR==2 {print $1}' /root/result.csv 2>/dev/null | awk -F: '{print $1}')
+        nwgpo=$(awk -F, 'NR==2 {print $1}' /root/result.csv 2>/dev/null | awk -F: '{print $2}')
+    fi
+    a=$(cat /root/result.csv 2>/dev/null | awk -F, '$3!="timeout ms" {print} ' | sed -n '2p' | awk -F ',' '{print $2}')
+    if [[ -z $a || $a = "100.00%" ]]; then
+        if [[ -z $(curl -s4m5 icanhazip.com -k) ]]; then
+            nwgip=2606:4700:d0::a29f:c001
+            nwgpo=2408
+        else
+            nwgip=162.159.192.1
+            nwgpo=2408
+        fi
+    fi
+    sed -i "157s#$wgip#$nwgip#g" /etc/s-box/sb10.json
+    sed -i "158s#$wgpo#$nwgpo#g" /etc/s-box/sb10.json
+    sed -i "118s#$wgip#$nwgip#g" /etc/s-box/sb11.json
+    sed -i "119s#$wgpo#$nwgpo#g" /etc/s-box/sb11.json
+    rm -rf /etc/s-box/sb.json
+    cp /etc/s-box/sb${num}.json /etc/s-box/sb.json
+    restartsb
+    rm -rf /root/result.csv /root/endip.sh 
+    echo
+    green "优选完毕，当前使用的对端IP：$nwgip:$nwgpo"
+elif [ "$menu" = "0" ]; then
+    changeserv
 else
-curl -sSL https://gitlab.com/rwkgyg/CFwarp/raw/main/point/endip.sh -o endip.sh && chmod +x endip.sh && (echo -e "1\n1\n") | bash endip.sh > /dev/null 2>&1
-nwgip=$(awk -F, 'NR==2 {print $1}' /root/result.csv 2>/dev/null | awk -F: '{print $1}')
-nwgpo=$(awk -F, 'NR==2 {print $1}' /root/result.csv 2>/dev/null | awk -F: '{print $2}')
-fi
-a=$(cat /root/result.csv 2>/dev/null | awk -F, '$3!="timeout ms" {print} ' | sed -n '2p' | awk -F ',' '{print $2}')
-if [[ -z $a || $a = "100.00%" ]]; then
-if [[ -z $(curl -s4m5 icanhazip.com -k) ]]; then
-nwgip=2606:4700:d0::a29f:c001
-nwgpo=2408
-else
-nwgip=162.159.192.1
-nwgpo=2408
-fi
-fi
-sed -i "157s#$wgip#$nwgip#g" /etc/s-box/sb10.json
-sed -i "158s#$wgpo#$nwgpo#g" /etc/s-box/sb10.json
-sed -i "118s#$wgip#$nwgip#g" /etc/s-box/sb11.json
-sed -i "119s#$wgpo#$nwgpo#g" /etc/s-box/sb11.json
-rm -rf /etc/s-box/sb.json
-cp /etc/s-box/sb${num}.json /etc/s-box/sb.json
-restartsb
-rm -rf /root/result.csv /root/endip.sh 
-echo
-green "优选完毕，当前使用的对端IP：$nwgip:$nwgpo"
-else
-changeserv
+    changewg
 fi
 }
 
@@ -4624,6 +4149,7 @@ rm /tmp/crontab.tmp
 
 lnsb(){
 rm -rf /usr/bin/sb
+# 注意：这里请替换为您自己的仓库地址，以便后续能同步更新
 curl -L -o /usr/bin/sb -# --retry 2 --insecure https://raw.githubusercontent.com/taizi8888/sing-box/main/sb.sh
 chmod +x /usr/bin/sb
 }
@@ -4731,93 +4257,18 @@ if [[ ! -f /etc/s-box/sb.json ]]; then
 red "未正常启动Sing-box，请卸载重装或者选择10查看运行日志反馈" && exit
 fi
 }
+
 # ==========================================
-# 【国旗+国家名】VIP优选节点生成函数
+# 【修正版】节点生成主函数 (已加入 VIP 和 GitLab 触发)
 # ==========================================
-res_custom_vip(){
-    # 1. 读取基础配置
-    local my_uuid=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[0].users[0].uuid')
-    local my_path=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[1].transport.path')
-    local my_domain=""
-    local node_type=""
-
-    # 2. 检测 Argo 状态
-    if [[ -s /etc/s-box/sbargoym.log ]]; then
-        my_domain=$(cat /etc/s-box/sbargoym.log)
-        node_type="固定Argo"
-    elif [[ -s /etc/s-box/argo.log ]]; then
-        my_domain=$(cat /etc/s-box/argo.log | grep -a trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-        node_type="临时Argo"
-    fi
-
-    # 3. 开始生成
-    if [[ -n "$my_domain" ]]; then
-        echo
-        white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        red "🚀【 VIP定制节点 ($node_type) 】生成中..."
-        
-        # --- 获取位置信息 (国旗+中文名) 开始 ---
-        # 请求 ip-api 获取中文国家名和代码
-        local ip_json=$(curl -s --max-time 5 "http://ip-api.com/json/?lang=zh-CN&fields=countryCode,country")
-        
-        # 提取数据 (依赖脚本自带的 jq)
-        local country_code=$(echo "$ip_json" | jq -r '.countryCode // empty')
-        local country_name=$(echo "$ip_json" | jq -r '.country // empty')
-        local flag_emoji=""
-
-        # 1. 生成国旗
-        if [[ -z "$country_code" ]]; then
-            flag_emoji="🌐"
-            country_name="未知地区"
-        else
-            flag_emoji=$(python3 -c "import sys; print(''.join([chr(ord(c) + 127397) for c in '$country_code']))" 2>/dev/null)
-            if [[ -z "$flag_emoji" ]]; then flag_emoji="🌐"; fi
-        fi
-        
-        # 2. 修正显示 (如果 API 没返回中文名，用代码代替)
-        if [[ -z "$country_name" ]]; then country_name="$country_code"; fi
-        
-        echo -e "当前定位：${yellow}${flag_emoji} ${country_name}${plain}" && sleep 1
-        # --- 获取位置信息 结束 ---
-        
-        rm -rf /etc/s-box/vm_ws_vip.txt
-
-        # 定义端口列表
-        local port_list="443 8443 2053 2083 2087 2096 80 8080 8880 2052 2082 2086 2095"
-        local j_count=1
-
-        for port in $port_list; do
-            local add_domain="j${j_count}.dtsm.de5.net"
-            
-            # 判断 TLS
-            local tls_status=""
-            if [[ "$port" =~ ^(443|8443|2053|2083|2087|2096)$ ]]; then
-                tls_status="tls"
-            else
-                tls_status=""
-            fi
-
-            # ⚠️ 命名格式：国旗 + 国家名 + 优选 + 端口
-            # 例如: 🇺🇸 美国 优选443
-            local ps_name="${flag_emoji} ${country_name} 优选${port}"
-            
-            local vmess_json="{\"add\":\"${add_domain}\",\"aid\":\"0\",\"host\":\"${my_domain}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"${port}\",\"ps\":\"${ps_name}\",\"tls\":\"${tls_status}\",\"sni\":\"${my_domain}\",\"type\":\"none\",\"v\":\"2\"}"
-            
-            echo "vmess://$(echo -n "$vmess_json" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
-            j_count=$((j_count+1))
-        done
-        
-        green "已注入 ${country_name} 优选节点！"
-    fi
-}
 sbshare(){
 # 1. 清理
-rm -rf /etc/s-box/jhdy.txt /etc/s-box/vl_reality.txt /etc/s-box/vm_ws_argols.txt /etc/s-box/vm_ws_argogd.txt /etc/s-box/vm_ws.txt /etc/s-box/vm_ws_tls.txt /etc/s-box/hy2.txt /etc/s-box/tuic5.txt /etc/s-box/vm_ws_vip.txt
+rm -rf /etc/s-box/jhdy.txt /etc/s-box/vl_reality.txt /etc/s-box/vm_ws_argols.txt /etc/s-box/vm_ws_argogd.txt /etc/s-box/vm_ws.txt /etc/s-box/vm_ws_tls.txt /etc/s-box/hy2.txt /etc/s-box/tuic5.txt /etc/s-box/vm_ws_vip.txt /etc/s-box/jhdy.txt
 
 # 2. 执行生成 (加入 res_custom_vip)
 result_vl_vm_hy_tu && resvless && resvmess && reshy2 && restu5 && res_custom_vip
 
-# 3. 合并
+# 3. 合并到明文节点文件 (jhdy.txt)
 cat /etc/s-box/vl_reality.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/vm_ws_argols.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/vm_ws_argogd.txt 2>/dev/null >> /etc/s-box/jhdy.txt
@@ -4829,10 +4280,12 @@ cat /etc/s-box/vm_ws_vip.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/hy2.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/tuic5.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 
-# 4. 输出
+# 4. 生成 Base64 订阅文件 (jh_sub.txt)
 baseurl=$(base64 -w 0 < /etc/s-box/jhdy.txt 2>/dev/null)
 v2sub=$(cat /etc/s-box/jhdy.txt 2>/dev/null)
 echo "$v2sub" > /etc/s-box/jh_sub.txt
+# 将 jhdy.txt (明文) 也保存一份到 jh_raw_gitlab.txt 对应的路径（这里其实直接推 jhdy.txt 即可）
+
 echo
 white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 red "🚀【 四合一聚合订阅 (已含 VIP 优选) 】节点信息如下：" && sleep 2
@@ -4842,6 +4295,8 @@ echo -e "${yellow}$baseurl${plain}"
 white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo
 sb_client
+# 【新增】自动推送到 GitLab
+gitlabsubgo
 }
 
 clash_sb_share(){
@@ -5343,3 +4798,5 @@ case "$Input" in
 16 ) sbsm;;
  * ) exit 
 esac
+
+}
