@@ -2926,6 +2926,13 @@ short_id=$(/etc/s-box/sing-box generate rand --hex 4)
 wget -q -O /root/geoip.db https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.db
 wget -q -O /root/geosite.db https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.db
 red "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+readp "请设置自定义节点备注名字 (回车默认使用系统主机名): " my_hostname
+if [[ -n "$my_hostname" ]]; then
+    hostname="$my_hostname"
+    green "节点备注名称已设置为：$hostname"
+else
+    green "节点备注名称保持默认：$hostname"
+fi
 green "五、自动生成warp-wireguard出站账户" && sleep 2
 warpwg
 inssbjsonser
@@ -4120,6 +4127,8 @@ green "Sing-box服务已重启\n" && sleep 3 && sb
 elif [ "$menu" = "2" ]; then
 if [[ x"${release}" == x"alpine" ]]; then
 rc-service sing-box stop
+rc-update del sing-box default
+rm /etc/init.d/sing-box -f
 else
 systemctl stop sing-box
 systemctl disable sing-box
@@ -4798,5 +4807,3 @@ case "$Input" in
 16 ) sbsm;;
  * ) exit 
 esac
-
-}
