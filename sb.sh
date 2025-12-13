@@ -65,7 +65,15 @@ bbr="Openvz版bbr-plus"
 else
 bbr="Openvz/Lxc"
 fi
-hostname=$(hostname)
+
+# ==========================================
+# 【核心逻辑】优先读取保存的自定义名字
+# ==========================================
+if [[ -f /etc/s-box/my_hostname_log ]]; then
+    hostname=$(cat /etc/s-box/my_hostname_log)
+else
+    hostname=$(hostname)
+fi
 
 if [ ! -f sbyg_update ]; then
 green "首次安装Sing-box-yg脚本必要的依赖……"
@@ -1981,482 +1989,6 @@ cat > /etc/s-box/sing_box_client.json <<EOF
 {
             "server": "$vmadd_argo",
             "server_port": 8443,
-            "tag": "vmess-tls-argo临时-$hostname",
-            "tls": {
-                "enabled": true,
-                "server_name": "$argo",
-                "insecure": false,
-                "utls": {
-                    "enabled": true,
-                    "fingerprint": "chrome"
-                }
-            },
-            "packet_encoding": "packetaddr",
-            "transport": {
-                "headers": {
-                    "Host": [
-                        "$argo"
-                    ]
-                },
-                "path": "$ws_path",
-                "type": "ws"
-            },
-            "type": "vmess",
-            "security": "auto",
-            "uuid": "$uuid"
-        },
-{
-            "server": "$vmadd_argo",
-            "server_port": 8880,
-            "tag": "vmess-argo临时-$hostname",
-            "tls": {
-                "enabled": false,
-                "server_name": "$argo",
-                "insecure": false,
-                "utls": {
-                    "enabled": true,
-                    "fingerprint": "chrome"
-                }
-            },
-            "packet_encoding": "packetaddr",
-            "transport": {
-                "headers": {
-                    "Host": [
-                        "$argo"
-                    ]
-                },
-                "path": "$ws_path",
-                "type": "ws"
-            },
-            "type": "vmess",
-            "security": "auto",
-            "uuid": "$uuid"
-        },
-    {
-      "tag": "direct",
-      "type": "direct"
-    },
-    {
-      "tag": "auto",
-      "type": "urltest",
-      "outbounds": [
-        "vless-$hostname",
-        "vmess-$hostname",
-        "hy2-$hostname",
-        "tuic5-$hostname",
-"vmess-tls-argo临时-$hostname",
-"vmess-argo临时-$hostname"
-      ],
-      "url": "https://www.gstatic.com/generate_204",
-      "interval": "1m",
-      "tolerance": 50,
-      "interrupt_exist_connections": false
-    }
-  ],
-  "route": {
-      "rule_set": [
-            {
-                "tag": "geosite-geolocation-!cn",
-                "type": "remote",
-                "format": "binary",
-                "url": "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/geolocation-!cn.srs",
-                "download_detour": "select",
-                "update_interval": "1d"
-            },
-            {
-                "tag": "geosite-cn",
-                "type": "remote",
-                "format": "binary",
-                "url": "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/geolocation-cn.srs",
-                "download_detour": "select",
-                "update_interval": "1d"
-            },
-            {
-                "tag": "geoip-cn",
-                "type": "remote",
-                "format": "binary",
-                "url": "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs",
-                "download_detour": "select",
-                "update_interval": "1d"
-            }
-        ],
-    "auto_detect_interface": true,
-    "final": "select",
-    "rules": [
-      {
-      "inbound": "tun-in",
-      "action": "sniff"
-      },
-      {
-      "protocol": "dns",
-      "action": "hijack-dns"
-      },
-      {
-      "port": 443,
-      "network": "udp",
-      "action": "reject"
-      },
-      {
-        "clash_mode": "Direct",
-        "outbound": "direct"
-      },
-      {
-        "clash_mode": "Global",
-        "outbound": "select"
-      },
-      {
-        "rule_set": "geoip-cn",
-        "outbound": "direct"
-      },
-      {
-        "rule_set": "geosite-cn",
-        "outbound": "direct"
-      },
-      {
-      "ip_is_private": true,
-      "outbound": "direct"
-      },
-      {
-        "rule_set": "geosite-geolocation-!cn",
-        "outbound": "select"
-      }
-    ]
-  },
-    "ntp": {
-    "enabled": true,
-    "server": "time.apple.com",
-    "server_port": 123,
-    "interval": "30m",
-    "detour": "direct"
-  }
-}
-EOF
-
-cat > /etc/s-box/clash_meta_client.yaml <<EOF
-port: 7890
-allow-lan: true
-mode: rule
-log-level: info
-unified-delay: true
-global-client-fingerprint: chrome
-dns:
-  enable: false
-  listen: :53
-  ipv6: true
-  enhanced-mode: fake-ip
-  fake-ip-range: 198.18.0.1/16
-  default-nameserver: 
-    - 223.5.5.5
-    - 8.8.8.8
-  nameserver:
-    - https://dns.alidns.com/dns-query
-    - https://doh.pub/dns-query
-  fallback:
-    - https://1.0.0.1/dns-query
-    - tls://dns.google
-  fallback-filter:
-    geoip: true
-    geoip-code: CN
-    ipcidr:
-      - 240.0.0.0/4
-
-proxies:
-- name: vless-reality-vision-$hostname               
-  type: vless
-  server: $server_ipcl                           
-  port: $vl_port                                
-  uuid: $uuid   
-  network: tcp
-  udp: true
-  tls: true
-  flow: xtls-rprx-vision
-  servername: $vl_name                 
-  reality-opts: 
-    public-key: $public_key    
-    short-id: $short_id                    
-  client-fingerprint: chrome                  
-
-- name: vmess-ws-$hostname                         
-  type: vmess
-  server: $vmadd_local                        
-  port: $vm_port                                     
-  uuid: $uuid       
-  alterId: 0
-  cipher: auto
-  udp: true
-  tls: $tls
-  network: ws
-  servername: $vm_name                    
-  ws-opts:
-    path: "$ws_path"                             
-    headers:
-      Host: $vm_name                     
-
-
-
-
-
-- name: hysteria2-$hostname                            
-  type: hysteria2                                      
-  server: $cl_hy2_ip                               
-  port: $hy2_port                                
-  password: $uuid                          
-  alpn:
-    - h3
-  sni: $hy2_name                               
-  skip-cert-verify: $hy2_ins
-  fast-open: true
-
-- name: tuic5-$hostname                            
-  server: $cl_tu5_ip                      
-  port: $tu5_port                                    
-  type: tuic
-  uuid: $uuid       
-  password: $uuid   
-  alpn: [h3]
-  disable-sni: true
-  reduce-rtt: true
-  udp-relay-mode: native
-  congestion-controller: bbr
-  sni: $tu5_name                                
-  skip-cert-verify: $tu5_ins
-
-proxy-groups:
-- name: 负载均衡
-  type: load-balance
-  url: https://www.gstatic.com/generate_204
-  interval: 300
-  strategy: round-robin
-  proxies:
-    - vless-reality-vision-$hostname                              
-    - vmess-ws-$hostname
-    - hysteria2-$hostname
-    - tuic5-$hostname
-
-- name: 自动选择
-  type: url-test
-  url: https://www.gstatic.com/generate_204
-  interval: 300
-  tolerance: 50
-  proxies:
-    - vless-reality-vision-$hostname                              
-    - vmess-ws-$hostname
-    - hysteria2-$hostname
-    - tuic5-$hostname
-    
-- name: 🌍选择代理节点
-  type: select
-  proxies:
-    - 负载均衡                                         
-    - 自动选择
-    - DIRECT
-    - vless-reality-vision-$hostname                              
-    - vmess-ws-$hostname
-    - hysteria2-$hostname
-    - tuic5-$hostname
-rules:
-  - GEOIP,LAN,DIRECT
-  - GEOIP,CN,DIRECT
-  - MATCH,🌍选择代理节点
-EOF
-
-elif [[ -n $(ps -e | grep -w $ym 2>/dev/null) && ! -n $(ps -e | grep -w $ls 2>/dev/null) && "$tls" = "false" ]]; then
-cat > /etc/s-box/sing_box_client.json <<EOF
-{
-  "log": {
-    "disabled": false,
-    "level": "info",
-    "timestamp": true
-  },
-  "experimental": {
-    "clash_api": {
-      "external_controller": "127.0.0.1:9090",
-      "external_ui": "ui",
-      "external_ui_download_url": "",
-      "external_ui_download_detour": "",
-      "secret": "",
-      "default_mode": "Rule"
-       },
-      "cache_file": {
-            "enabled": true,
-            "path": "cache.db",
-            "store_fakeip": true
-        }
-    },
-    "dns": {
-        "servers": [
-            {
-                "tag": "proxydns",
-                "address": "$sbdnsip",
-                "detour": "select"
-            },
-            {
-                "tag": "localdns",
-                "address": "h3://223.5.5.5/dns-query",
-                "detour": "direct"
-            },
-            {
-                "tag": "dns_fakeip",
-                "address": "fakeip"
-            }
-        ],
-        "rules": [
-            {
-                "outbound": "any",
-                "server": "localdns",
-                "disable_cache": true
-            },
-            {
-                "clash_mode": "Global",
-                "server": "proxydns"
-            },
-            {
-                "clash_mode": "Direct",
-                "server": "localdns"
-            },
-            {
-                "rule_set": "geosite-cn",
-                "server": "localdns"
-            },
-            {
-                 "rule_set": "geosite-geolocation-!cn",
-                 "server": "proxydns"
-            },
-             {
-                "rule_set": "geosite-geolocation-!cn",         
-                "query_type": [
-                    "A",
-                    "AAAA"
-                ],
-                "server": "dns_fakeip"
-            }
-          ],
-           "fakeip": {
-           "enabled": true,
-           "inet4_range": "198.18.0.0/15",
-           "inet6_range": "fc00::/18"
-         },
-          "independent_cache": true,
-          "final": "proxydns"
-        },
-      "inbounds": [
-    {
-      "type": "tun",
-     "tag": "tun-in",
-      "address": [
-      "172.19.0.1/30",
-      "fd00::1/126"
-      ],
-      "auto_route": true,
-      "strict_route": true,
-      "sniff": true,
-      "sniff_override_destination": true,
-      "domain_strategy": "prefer_ipv4"
-    }
-  ],
-  "outbounds": [
-    {
-      "tag": "select",
-      "type": "selector",
-      "default": "auto",
-      "outbounds": [
-        "auto",
-        "vless-$hostname",
-        "vmess-$hostname",
-        "hy2-$hostname",
-        "tuic5-$hostname",
-"vmess-tls-argo固定-$hostname",
-"vmess-argo固定-$hostname"
-      ]
-    },
-    {
-      "type": "vless",
-      "tag": "vless-$hostname",
-      "server": "$server_ipcl",
-      "server_port": $vl_port,
-      "uuid": "$uuid",
-      "flow": "xtls-rprx-vision",
-      "tls": {
-        "enabled": true,
-        "server_name": "$vl_name",
-        "utls": {
-          "enabled": true,
-          "fingerprint": "chrome"
-        },
-      "reality": {
-          "enabled": true,
-          "public_key": "$public_key",
-          "short_id": "$short_id"
-        }
-      }
-    },
-{
-            "server": "$vmadd_local",
-            "server_port": $vm_port,
-            "tag": "vmess-$hostname",
-            "tls": {
-                "enabled": $tls,
-                "server_name": "$vm_name",
-                "insecure": false,
-                "utls": {
-                    "enabled": true,
-                    "fingerprint": "chrome"
-                }
-            },
-            "packet_encoding": "packetaddr",
-            "transport": {
-                "headers": {
-                    "Host": [
-                        "$vm_name"
-                    ]
-                },
-                "path": "$ws_path",
-                "type": "ws"
-            },
-            "type": "vmess",
-            "security": "auto",
-            "uuid": "$uuid"
-        },
-
-    {
-        "type": "hysteria2",
-        "tag": "hy2-$hostname",
-        "server": "$cl_hy2_ip",
-        "server_port": $hy2_port,
-        "password": "$uuid",
-        "tls": {
-            "enabled": true,
-            "server_name": "$hy2_name",
-            "insecure": $hy2_ins,
-            "alpn": [
-                "h3"
-            ]
-        }
-    },
-        {
-            "type":"tuic",
-            "tag": "tuic5-$hostname",
-            "server": "$cl_tu5_ip",
-            "server_port": $tu5_port,
-            "uuid": "$uuid",
-            "password": "$uuid",
-            "congestion_control": "bbr",
-            "udp_relay_mode": "native",
-            "udp_over_stream": false,
-            "zero_rtt_handshake": false,
-            "heartbeat": "10s",
-            "tls":{
-                "enabled": true,
-                "server_name": "$tu5_name",
-                "insecure": $tu5_ins,
-                "alpn": [
-                    "h3"
-                ]
-            }
-        },
-{
-            "server": "$vmadd_argo",
-            "server_port": 8443,
             "tag": "vmess-tls-argo固定-$hostname",
             "tls": {
                 "enabled": true,
@@ -2667,10 +2199,6 @@ proxies:
     path: "$ws_path"                             
     headers:
       Host: $vm_name                     
-
-
-
-
 
 - name: hysteria2-$hostname                            
   type: hysteria2                                      
@@ -2929,6 +2457,7 @@ red "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 readp "请设置自定义节点备注名字 (回车默认使用系统主机名): " my_hostname
 if [[ -n "$my_hostname" ]]; then
     hostname="$my_hostname"
+    echo "$hostname" > /etc/s-box/my_hostname_log
     green "节点备注名称已设置为：$hostname"
 else
     green "节点备注名称保持默认：$hostname"
@@ -3429,11 +2958,44 @@ fi
 exit
 }
 
+# ==========================================
+# 【新增】 修改名字函数
+# ==========================================
+changename(){
+    sbactive
+    local current_name=$(cat /etc/s-box/my_hostname_log 2>/dev/null)
+    if [[ -z "$current_name" ]]; then current_name=$(hostname); fi
+
+    echo
+    green "当前节点备注名字: $current_name"
+    readp "请输入新的节点备注名字 (禁止包含空格): " new_name
+
+    if [[ -n "$new_name" ]]; then
+        # 1. 保存到文件，确保持久化
+        echo "$new_name" > /etc/s-box/my_hostname_log
+        
+        # 2. 批量替换配置文件中的旧名字
+        sed -i "s/$current_name/$new_name/g" /etc/s-box/*.json
+        sed -i "s/$current_name/$new_name/g" /etc/s-box/*.yaml
+        
+        # 3. 更新当前运行环境变量
+        hostname="$new_name"
+        
+        # 4. 重启服务并刷新订阅
+        restartsb
+        sbshare
+        
+        green "节点名字已成功修改为: $new_name"
+    else
+        red "名字不能为空"
+    fi
+}
+
 changeserv(){
 sbactive
 echo
 green "Sing-box配置变更选择如下:"
-readp "1：更换Reality域名伪装地址、切换自签证书与Acme域名证书、开关TLS\n2：更换全协议UUID(密码)、Vmess-Path路径\n3：设置Argo临时隧道、固定隧道\n4：切换IPV4或IPV6的代理优先级\n5：设置Telegram推送节点通知\n6：更换Warp-wireguard出站账户\n7：设置Gitlab订阅分享链接\n8：设置所有Vmess节点的CDN优选地址\n0：返回上层\n请选择【0-8】：" menu
+readp "1：更换Reality域名伪装地址、切换自签证书与Acme域名证书、开关TLS\n2：更换全协议UUID(密码)、Vmess-Path路径\n3：设置Argo临时隧道、固定隧道\n4：切换IPV4或IPV6的代理优先级\n5：设置Telegram推送节点通知\n6：更换Warp-wireguard出站账户\n7：设置Gitlab订阅分享链接\n8：设置所有Vmess节点的CDN优选地址\n9：修改节点备注名字 (安装后修改)\n0：返回上层\n请选择【0-9】：" menu
 if [ "$menu" = "1" ];then
 changeym
 elif [ "$menu" = "2" ];then
@@ -3450,6 +3012,8 @@ elif [ "$menu" = "7" ];then
 gitlabsub
 elif [ "$menu" = "8" ];then
 vmesscfadd
+elif [ "$menu" = "9" ];then
+changename
 else 
 sb
 fi
@@ -4268,13 +3832,58 @@ fi
 }
 
 # ==========================================
-# 【修正版】节点生成主函数 (已加入 VIP 和 GitLab 触发)
+# 【核心新增】自动生成带自定义名字的 j2-j12 / d2-d12
+# ==========================================
+res_custom_vip(){
+    # 读取固定Argo域名，如果没有则使用备用域名
+    local target_host=$(cat /etc/s-box/sbargoym.log 2>/dev/null) 
+    if [[ -z "$target_host" ]]; then target_host="www.visa.com.sg"; fi
+
+    # 确保 UUID 和 Path 变量存在 (如果从菜单9进来，result_vl_vm_hy_tu 已经读取了它们)
+    if [[ -z "$uuid" ]]; then uuid=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[0].users[0].uuid'); fi
+    if [[ -z "$ws_path" ]]; then ws_path=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[1].transport.path'); fi
+
+    # 清空旧的 VIP 节点文件
+    > /etc/s-box/vm_ws_vip.txt
+
+    echo
+    blue "正在生成 j2-j12 和 d2-d12 优选节点 (后缀: $hostname)..."
+
+    # --- 循环生成 j2 到 j12 (TLS 8443) ---
+    for i in {2..12}; do
+        # 强制使用自定义 hostname
+        node_name="j${i}-${hostname}"
+        
+        # 构造 JSON
+        vmess_json='{"add":"'$target_host'","aid":"0","host":"'$target_host'","id":"'$uuid'","net":"ws","path":"'$ws_path'","port":"8443","ps":"'$node_name'","tls":"tls","sni":"'$target_host'","type":"none","v":"2"}'
+        
+        # Base64 编码并写入
+        echo "vmess://$(echo -n "$vmess_json" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
+    done
+
+    # --- 循环生成 d2 到 d12 (No-TLS 8880) ---
+    for i in {2..12}; do
+        # 强制使用自定义 hostname
+        node_name="d${i}-${hostname}"
+        
+        # 构造 JSON
+        vmess_json='{"add":"'$target_host'","aid":"0","host":"'$target_host'","id":"'$uuid'","net":"ws","path":"'$ws_path'","port":"8880","ps":"'$node_name'","tls":"","type":"none","v":"2"}'
+        
+        # Base64 编码并写入
+        echo "vmess://$(echo -n "$vmess_json" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
+    done
+    
+    green "VIP 节点生成完毕！"
+}
+
+# ==========================================
+# 【修正版】节点生成主函数 (已加入 VIP 生成)
 # ==========================================
 sbshare(){
 # 1. 清理
 rm -rf /etc/s-box/jhdy.txt /etc/s-box/vl_reality.txt /etc/s-box/vm_ws_argols.txt /etc/s-box/vm_ws_argogd.txt /etc/s-box/vm_ws.txt /etc/s-box/vm_ws_tls.txt /etc/s-box/hy2.txt /etc/s-box/tuic5.txt /etc/s-box/vm_ws_vip.txt /etc/s-box/jhdy.txt
 
-# 2. 执行生成 (加入 res_custom_vip)
+# 2. 执行生成 (注意这里加入了 res_custom_vip)
 result_vl_vm_hy_tu && resvless && resvmess && reshy2 && restu5 && res_custom_vip
 
 # 3. 合并到明文节点文件 (jhdy.txt)
@@ -4283,9 +3892,9 @@ cat /etc/s-box/vm_ws_argols.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/vm_ws_argogd.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/vm_ws.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/vm_ws_tls.txt 2>/dev/null >> /etc/s-box/jhdy.txt
-# === 重点：VIP文件加入订阅 ===
+# === 重点：将 VIP 节点加入订阅 ===
 cat /etc/s-box/vm_ws_vip.txt 2>/dev/null >> /etc/s-box/jhdy.txt
-# ===========================
+# ===============================
 cat /etc/s-box/hy2.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 cat /etc/s-box/tuic5.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 
@@ -4293,18 +3902,17 @@ cat /etc/s-box/tuic5.txt 2>/dev/null >> /etc/s-box/jhdy.txt
 baseurl=$(base64 -w 0 < /etc/s-box/jhdy.txt 2>/dev/null)
 v2sub=$(cat /etc/s-box/jhdy.txt 2>/dev/null)
 echo "$v2sub" > /etc/s-box/jh_sub.txt
-# 将 jhdy.txt (明文) 也保存一份到 jh_raw_gitlab.txt 对应的路径（这里其实直接推 jhdy.txt 即可）
 
 echo
 white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-red "🚀【 四合一聚合订阅 (已含 VIP 优选) 】节点信息如下：" && sleep 2
+red "🚀【 四合一聚合订阅 (已含 j2-j12/d2-d12 优选) 】节点信息如下：" && sleep 2
 echo
 echo "分享链接"
 echo -e "${yellow}$baseurl${plain}"
 white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo
 sb_client
-# 【新增】自动推送到 GitLab
+# 自动推送到 GitLab
 gitlabsubgo
 }
 
@@ -4319,7 +3927,7 @@ yellow "0：返回上层"
 readp "请选择【0-4】：" menu
 if [ "$menu" = "1" ]; then
 sbshare
-elif  [ "$menu" = "2" ]; then
+elif  [ "$menu" = "2" ]; then
 green "请稍等……"
 sbshare > /dev/null 2>&1
 white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -4342,7 +3950,7 @@ cat /etc/s-box/sing_box_client.json
 echo
 white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo
-elif  [ "$menu" = "3" ]; then
+elif  [ "$menu" = "3" ]; then
 green "请稍等……"
 sbshare > /dev/null 2>&1
 white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -4387,7 +3995,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/warp-yg/main/CFwarp.
 }
 bbr(){
 if [[ $vi =~ lxc|openvz ]]; then
-yellow "当前VPS的架构为 $vi，不支持开启原版BBR加速" && sleep 2 && exit 
+yellow "当前VPS的架构为 $vi，不支持开启原版BBR加速" && sleep 2 && exit 
 else
 green "点击任意键，即可开启BBR加速，ctrl+c退出"
 bash <(curl -Ls https://raw.githubusercontent.com/teddysun/across/master/bbr.sh)
@@ -4416,7 +4024,7 @@ hy2_sniname=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[2].tls.key_p
 tu5_sniname=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[3].tls.key_path')
 [[ "$tu5_sniname" = '/etc/s-box/private.key' ]] && tu5_zs="自签证书" || tu5_zs="域名证书"
 echo -e "Sing-box节点关键信息、已分流域名情况如下："
-echo -e "🚀【 Vless-reality 】${yellow}端口:$vl_port  Reality域名证书伪装地址：$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[0].tls.server_name')${plain}"
+echo -e "🚀【 Vless-reality 】${yellow}端口:$vl_port  Reality域名证书伪装地址：$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[0].tls.server_name')${plain}"
 if [[ "$tls" = "false" ]]; then
 echo -e "🚀【   Vmess-ws    】${yellow}端口:$vm_port   证书形式:$vm_zs   Argo状态:$argoym${plain}"
 else
