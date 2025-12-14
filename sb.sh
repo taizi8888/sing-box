@@ -3301,7 +3301,7 @@ res_custom_vip(){
     white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
     red "🚀【 VIP定制节点 ($node_type) 】生成中..."
     
-    # 获取国旗 (可选，增加美观)
+    # 获取国旗
     local ip_json=$(curl -s --max-time 5 "http://ip-api.com/json/?lang=zh-CN&fields=countryCode,country")
     local flag_emoji=$(python3 -c "import sys; print(''.join([chr(ord(c) + 127397) for c in '$(echo "$ip_json" | jq -r '.countryCode // empty')']))" 2>/dev/null)
     if [[ -z "$flag_emoji" ]]; then flag_emoji="🌐"; fi
@@ -3325,13 +3325,15 @@ res_custom_vip(){
 
         # --- 生成 j 节点 ---
         local add_j="j${i}.dtsm.de5.net"
-        local ps_j="${flag_emoji} ${country_name} 优选${port} j${i}"
+        # 【👇修复点】这里加上了 -${hostname}
+        local ps_j="${flag_emoji} ${country_name} 优选${port} j${i}-${hostname}"
         local json_j="{\"add\":\"${add_j}\",\"aid\":\"0\",\"host\":\"${target_host}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"${port}\",\"ps\":\"${ps_j}\",\"tls\":\"${tls_status}\",\"sni\":\"${target_host}\",\"type\":\"none\",\"v\":\"2\"}"
         echo "vmess://$(echo -n "$json_j" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
 
         # --- 生成 d 节点 ---
         local add_d="d${i}.dtsm.de5.net"
-        local ps_d="${flag_emoji} ${country_name} 优选${port} d${i}"
+        # 【👇修复点】这里加上了 -${hostname}
+        local ps_d="${flag_emoji} ${country_name} 优选${port} d${i}-${hostname}"
         local json_d="{\"add\":\"${add_d}\",\"aid\":\"0\",\"host\":\"${target_host}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"${port}\",\"ps\":\"${ps_d}\",\"tls\":\"${tls_status}\",\"sni\":\"${target_host}\",\"type\":\"none\",\"v\":\"2\"}"
         echo "vmess://$(echo -n "$json_d" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
     done
