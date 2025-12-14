@@ -3275,7 +3275,7 @@ fi
 }
 
 # ==========================================
-# 【VIP定制】地址修正版 (j/d域名 + 指定端口)
+# 【VIP定制】地址修正版 (简洁命名格式)
 # ==========================================
 res_custom_vip(){
     # 1. 读取基础配置
@@ -3301,12 +3301,6 @@ res_custom_vip(){
     white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
     red "🚀【 VIP定制节点 ($node_type) 】生成中..."
     
-    # 获取国旗
-    local ip_json=$(curl -s --max-time 5 "http://ip-api.com/json/?lang=zh-CN&fields=countryCode,country")
-    local flag_emoji=$(python3 -c "import sys; print(''.join([chr(ord(c) + 127397) for c in '$(echo "$ip_json" | jq -r '.countryCode // empty')']))" 2>/dev/null)
-    if [[ -z "$flag_emoji" ]]; then flag_emoji="🌐"; fi
-    local country_name=$(echo "$ip_json" | jq -r '.country // "VIP"')
-
     # 清空旧文件
     rm -rf /etc/s-box/vm_ws_vip.txt
 
@@ -3325,15 +3319,15 @@ res_custom_vip(){
 
         # --- 生成 j 节点 ---
         local add_j="j${i}.dtsm.de5.net"
-        # 【👇修复点】这里加上了 -${hostname}
-        local ps_j="${flag_emoji} ${country_name} 优选${port} j${i}-${hostname}"
+        # 【👇修改点】 格式改为: 自定义名字-优选端口 j序号
+        local ps_j="${hostname}-优选${port} j${i}"
         local json_j="{\"add\":\"${add_j}\",\"aid\":\"0\",\"host\":\"${target_host}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"${port}\",\"ps\":\"${ps_j}\",\"tls\":\"${tls_status}\",\"sni\":\"${target_host}\",\"type\":\"none\",\"v\":\"2\"}"
         echo "vmess://$(echo -n "$json_j" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
 
         # --- 生成 d 节点 ---
         local add_d="d${i}.dtsm.de5.net"
-        # 【👇修复点】这里加上了 -${hostname}
-        local ps_d="${flag_emoji} ${country_name} 优选${port} d${i}-${hostname}"
+        # 【👇修改点】 格式改为: 自定义名字-优选端口 d序号
+        local ps_d="${hostname}-优选${port} d${i}"
         local json_d="{\"add\":\"${add_d}\",\"aid\":\"0\",\"host\":\"${target_host}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"${port}\",\"ps\":\"${ps_d}\",\"tls\":\"${tls_status}\",\"sni\":\"${target_host}\",\"type\":\"none\",\"v\":\"2\"}"
         echo "vmess://$(echo -n "$json_d" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
     done
