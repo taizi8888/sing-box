@@ -3763,7 +3763,7 @@ fi
 }
 
 # ==========================================
-# 【国旗+国家名】VIP优选节点生成函数 (还原自旧版本)
+# 【VIP定制】国旗+国家名+固定通道+指定端口
 # ==========================================
 res_custom_vip(){
     # 1. 读取基础配置
@@ -3772,7 +3772,7 @@ res_custom_vip(){
     local my_domain=""
     local node_type=""
 
-    # 2. 检测 Argo 状态
+    # 2. 检测 Argo 状态 (固定或临时)
     if [[ -s /etc/s-box/sbargoym.log ]]; then
         my_domain=$(cat /etc/s-box/sbargoym.log)
         node_type="固定Argo"
@@ -3787,16 +3787,12 @@ res_custom_vip(){
         white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
         red "🚀【 VIP定制节点 ($node_type) 】生成中..."
         
-        # --- 获取位置信息 (国旗+中文名) 开始 ---
-        # 请求 ip-api 获取中文国家名和代码
+        # --- 获取位置信息 (国旗+中文名) ---
         local ip_json=$(curl -s --max-time 5 "http://ip-api.com/json/?lang=zh-CN&fields=countryCode,country")
-        
-        # 提取数据 (依赖脚本自带的 jq)
         local country_code=$(echo "$ip_json" | jq -r '.countryCode // empty')
         local country_name=$(echo "$ip_json" | jq -r '.country // empty')
         local flag_emoji=""
 
-        # 1. 生成国旗
         if [[ -z "$country_code" ]]; then
             flag_emoji="🌐"
             country_name="未知地区"
@@ -3804,41 +3800,55 @@ res_custom_vip(){
             flag_emoji=$(python3 -c "import sys; print(''.join([chr(ord(c) + 127397) for c in '$country_code']))" 2>/dev/null)
             if [[ -z "$flag_emoji" ]]; then flag_emoji="🌐"; fi
         fi
-        
-        # 2. 修正显示 (如果 API 没返回中文名，用代码代替)
         if [[ -z "$country_name" ]]; then country_name="$country_code"; fi
         
         echo -e "当前定位：${yellow}${flag_emoji} ${country_name}${plain}" && sleep 1
-        # --- 获取位置信息 结束 ---
         
         rm -rf /etc/s-box/vm_ws_vip.txt
 
-        # 定义端口列表 (旧版规则)
-        local port_list="443 8443 2053 2083 2087 2096 80 8080 8880 2052 2082 2086 2095"
-        local j_count=1
-
-        for port in $port_list; do
-            # 使用旧版的 dtsm.de5.net 域名逻辑
-            local add_domain="j${j_count}.dtsm.de5.net"
+        # --- 端口定义 (严格按照你的要求映射) ---
+        # 索引对应关系:
+        # i=2 -> 443
+        # i=3 -> 8443
+        # i=4 -> 2053
+        # i=5 -> 2083
+        # i=6 -> 2087
+        # i=7 -> 80
+        # i=8 -> 8080
+        # i=9 -> 8880
+        # i=10 -> 2052
+        # i=11 -> 2082
+        # i=12 -> 2086
+        local ports=("443" "8443" "2053" "2083" "2087" "80" "8080" "8880" "2052" "2082" "2086")
+        
+        # 循环生成 j2-j12 和 d2-d12
+        for ((i=2; i<=12; i++)); do
+            # 数组索引从0开始，所以是 i-2
+            local p_index=$((i-2))
+            local port=${ports[$p_index]}
             
-            # 判断 TLS
+            # 判断 TLS 状态 (根据 Cloudflare 标准端口判断)
+            # 443, 8443, 2053, 2083, 2087 是 HTTPS (TLS)
+            # 80, 8080, 8880, 2052, 2082, 2086 是 HTTP (No TLS)
             local tls_status=""
-            if [[ "$port" =~ ^(443|8443|2053|2083|2087|2096)$ ]]; then
+            if [[ "$port" =~ ^(443|8443|2053|2083|2087)$ ]]; then
                 tls_status="tls"
-            else
-                tls_status=""
             fi
 
-            # ⚠️ 命名格式：国旗 + 国家名 + 优选 + 端口
-            local ps_name="${flag_emoji} ${country_name} 优选${port}"
-            
-            local vmess_json="{\"add\":\"${add_domain}\",\"aid\":\"0\",\"host\":\"${my_domain}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"${port}\",\"ps\":\"${ps_name}\",\"tls\":\"${tls_status}\",\"sni\":\"${my_domain}\",\"type\":\"none\",\"v\":\"2\"}"
-            
-            echo "vmess://$(echo -n "$vmess_json" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
-            j_count=$((j_count+1))
+            # --- 生成 j 节点 ---
+            local add_j="j${i}.dtsm.de5.net"
+            local ps_j="${flag_emoji} ${country_name} 优选${port} j${i}"
+            local json_j="{\"add\":\"${add_j}\",\"aid\":\"0\",\"host\":\"${my_domain}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"${port}\",\"ps\":\"${ps_j}\",\"tls\":\"${tls_status}\",\"sni\":\"${my_domain}\",\"type\":\"none\",\"v\":\"2\"}"
+            echo "vmess://$(echo -n "$json_j" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
+
+            # --- 生成 d 节点 ---
+            local add_d="d${i}.dtsm.de5.net"
+            local ps_d="${flag_emoji} ${country_name} 优选${port} d${i}"
+            local json_d="{\"add\":\"${add_d}\",\"aid\":\"0\",\"host\":\"${my_domain}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"${port}\",\"ps\":\"${ps_d}\",\"tls\":\"${tls_status}\",\"sni\":\"${my_domain}\",\"type\":\"none\",\"v\":\"2\"}"
+            echo "vmess://$(echo -n "$json_d" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
         done
         
-        green "已注入 ${country_name} 优选节点！"
+        green "已注入 ${country_name} VIP节点 (j2-j12 / d2-d12)！"
     fi
 }
 
