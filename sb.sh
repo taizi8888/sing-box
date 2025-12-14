@@ -3599,6 +3599,106 @@ else
 sb
 fi
 }
+showprotocol(){
+allports
+sbymfl
+tls=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[1].tls.enabled')
+if [[ "$tls" = "false" ]]; then
+argopid
+if [[ -n $(ps -e | grep -w $ym 2>/dev/null) || -n $(ps -e | grep -w $ls 2>/dev/null) ]]; then
+vm_zs="TLS关闭"
+argoym="已开启"
+else
+vm_zs="TLS关闭"
+argoym="未开启"
+fi
+else
+vm_zs="TLS开启"
+argoym="不支持开启"
+fi
+hy2_sniname=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[2].tls.key_path')
+[[ "$hy2_sniname" = '/etc/s-box/private.key' ]] && hy2_zs="自签证书" || hy2_zs="域名证书"
+tu5_sniname=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[3].tls.key_path')
+[[ "$tu5_sniname" = '/etc/s-box/private.key' ]] && tu5_zs="自签证书" || tu5_zs="域名证书"
+echo -e "Sing-box节点关键信息、已分流域名情况如下："
+echo -e "🚀【 Vless-reality 】${yellow}端口:$vl_port  Reality域名证书伪装地址：$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[0].tls.server_name')${plain}"
+if [[ "$tls" = "false" ]]; then
+echo -e "🚀【   Vmess-ws    】${yellow}端口:$vm_port   证书形式:$vm_zs   Argo状态:$argoym${plain}"
+else
+echo -e "🚀【 Vmess-ws-tls  】${yellow}端口:$vm_port   证书形式:$vm_zs   Argo状态:$argoym${plain}"
+fi
+echo -e "🚀【  Hysteria-2   】${yellow}端口:$hy2_port  证书形式:$hy2_zs  转发多端口: $hy2zfport${plain}"
+echo -e "🚀【    Tuic-v5    】${yellow}端口:$tu5_port  证书形式:$tu5_zs  转发多端口: $tu5zfport${plain}"
+if [ "$argoym" = "已开启" ]; then
+echo -e "Vmess-UUID：${yellow}$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[0].users[0].uuid')${plain}"
+echo -e "Vmess-Path：${yellow}$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[1].transport.path')${plain}"
+if [[ -n $(ps -e | grep -w $ls 2>/dev/null) ]]; then
+echo -e "Argo临时域名：${yellow}$(cat /etc/s-box/argo.log 2>/dev/null | grep -a trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')${plain}"
+fi
+if [[ -n $(ps -e | grep -w $ym 2>/dev/null) ]]; then
+echo -e "Argo固定域名：${yellow}$(cat /etc/s-box/sbargoym.log 2>/dev/null)${plain}"
+fi
+fi
+echo "------------------------------------------------------------------------------------"
+if [[ -n $(ps -e | grep sbwpph) ]]; then
+s5port=$(cat /etc/s-box/sbwpph.log 2>/dev/null | awk '{print $3}'| awk -F":" '{print $NF}')
+s5gj=$(cat /etc/s-box/sbwpph.log 2>/dev/null | awk '{print $6}')
+case "$s5gj" in
+AT) showgj="奥地利" ;;
+AU) showgj="澳大利亚" ;;
+BE) showgj="比利时" ;;
+BG) showgj="保加利亚" ;;
+CA) showgj="加拿大" ;;
+CH) showgj="瑞士" ;;
+CZ) showgj="捷克" ;;
+DE) showgj="德国" ;;
+DK) showgj="丹麦" ;;
+EE) showgj="爱沙尼亚" ;;
+ES) showgj="西班牙" ;;
+FI) showgj="芬兰" ;;
+FR) showgj="法国" ;;
+GB) showgj="英国" ;;
+HR) showgj="克罗地亚" ;;
+HU) showgj="匈牙利" ;;
+IE) showgj="爱尔兰" ;;
+IN) showgj="印度" ;;
+IT) showgj="意大利" ;;
+JP) showgj="日本" ;;
+LT) showgj="立陶宛" ;;
+LV) showgj="拉脱维亚" ;;
+NL) showgj="荷兰" ;;
+NO) showgj="挪威" ;;
+PL) showgj="波兰" ;;
+PT) showgj="葡萄牙" ;;
+RO) showgj="罗马尼亚" ;;
+RS) showgj="塞尔维亚" ;;
+SE) showgj="瑞典" ;;
+SG) showgj="新加坡" ;;
+SK) showgj="斯洛伐克" ;;
+US) showgj="美国" ;;
+esac
+grep -q "country" /etc/s-box/sbwpph.log 2>/dev/null && s5ms="多地区Psiphon代理模式 (端口:$s5port  国家:$showgj)" || s5ms="本地Warp代理模式 (端口:$s5port)"
+echo -e "WARP-plus-Socks5状态：$yellow已启动 $s5ms$plain"
+else
+echo -e "WARP-plus-Socks5状态：$yellow未启动$plain"
+fi
+echo "------------------------------------------------------------------------------------"
+ww4="warp-wireguard-ipv4优先分流域名：$wfl4"
+ww6="warp-wireguard-ipv6优先分流域名：$wfl6"
+ws4="warp-socks5-ipv4优先分流域名：$sfl4"
+ws6="warp-socks5-ipv6优先分流域名：$sfl6"
+l4="VPS本地ipv4优先分流域名：$adfl4"
+l6="VPS本地ipv6优先分流域名：$adfl6"
+[[ "$sbnh" == "1.10" ]] && ymflzu=("ww4" "ww6" "ws4" "ws6" "l4" "l6") || ymflzu=("ww6" "ws4" "l4" "l6")
+for ymfl in "${ymflzu[@]}"; do
+if [[ ${!ymfl} != *"未"* ]]; then
+echo -e "${!ymfl}"
+fi
+done
+if [[ $ww4 = *"未"* && $ww6 = *"未"* && $ws4 = *"未"* && $ws6 = *"未"* && $l4 = *"未"* && $l6 = *"未"* ]] ; then
+echo -e "未设置域名分流"
+fi
+}
 
 sbsm(){
 echo
