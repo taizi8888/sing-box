@@ -3763,48 +3763,83 @@ fi
 }
 
 # ==========================================
-# 【核心新增】自动生成带自定义名字的 j2-j12 / d2-d12
+# 【国旗+国家名】VIP优选节点生成函数 (还原自旧版本)
 # ==========================================
 res_custom_vip(){
-    # 读取固定Argo域名，如果没有则使用备用域名
-    local target_host=$(cat /etc/s-box/sbargoym.log 2>/dev/null) 
-    if [[ -z "$target_host" ]]; then target_host="www.visa.com.sg"; fi
+    # 1. 读取基础配置
+    local my_uuid=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[0].users[0].uuid')
+    local my_path=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[1].transport.path')
+    local my_domain=""
+    local node_type=""
 
-    # 确保 UUID 和 Path 变量存在 (如果从菜单9进来，result_vl_vm_hy_tu 已经读取了它们)
-    if [[ -z "$uuid" ]]; then uuid=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[0].users[0].uuid'); fi
-    if [[ -z "$ws_path" ]]; then ws_path=$(sed 's://.*::g' /etc/s-box/sb.json | jq -r '.inbounds[1].transport.path'); fi
+    # 2. 检测 Argo 状态
+    if [[ -s /etc/s-box/sbargoym.log ]]; then
+        my_domain=$(cat /etc/s-box/sbargoym.log)
+        node_type="固定Argo"
+    elif [[ -s /etc/s-box/argo.log ]]; then
+        my_domain=$(cat /etc/s-box/argo.log | grep -a trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+        node_type="临时Argo"
+    fi
 
-    # 清空旧的 VIP 节点文件
-    > /etc/s-box/vm_ws_vip.txt
-
-    echo
-    blue "正在生成 j2-j12 和 d2-d12 优选节点 (后缀: $hostname)..."
-
-    # --- 循环生成 j2 到 j12 (TLS 8443) ---
-    for i in {2..12}; do
-        # 强制使用自定义 hostname
-        node_name="j${i}-${hostname}"
+    # 3. 开始生成
+    if [[ -n "$my_domain" ]]; then
+        echo
+        white "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        red "🚀【 VIP定制节点 ($node_type) 】生成中..."
         
-        # 构造 JSON
-        vmess_json='{"add":"'$target_host'","aid":"0","host":"'$target_host'","id":"'$uuid'","net":"ws","path":"'$ws_path'","port":"8443","ps":"'$node_name'","tls":"tls","sni":"'$target_host'","type":"none","v":"2"}'
+        # --- 获取位置信息 (国旗+中文名) 开始 ---
+        # 请求 ip-api 获取中文国家名和代码
+        local ip_json=$(curl -s --max-time 5 "http://ip-api.com/json/?lang=zh-CN&fields=countryCode,country")
         
-        # Base64 编码并写入
-        echo "vmess://$(echo -n "$vmess_json" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
-    done
+        # 提取数据 (依赖脚本自带的 jq)
+        local country_code=$(echo "$ip_json" | jq -r '.countryCode // empty')
+        local country_name=$(echo "$ip_json" | jq -r '.country // empty')
+        local flag_emoji=""
 
-    # --- 循环生成 d2 到 d12 (No-TLS 8880) ---
-    for i in {2..12}; do
-        # 强制使用自定义 hostname
-        node_name="d${i}-${hostname}"
+        # 1. 生成国旗
+        if [[ -z "$country_code" ]]; then
+            flag_emoji="🌐"
+            country_name="未知地区"
+        else
+            flag_emoji=$(python3 -c "import sys; print(''.join([chr(ord(c) + 127397) for c in '$country_code']))" 2>/dev/null)
+            if [[ -z "$flag_emoji" ]]; then flag_emoji="🌐"; fi
+        fi
         
-        # 构造 JSON
-        vmess_json='{"add":"'$target_host'","aid":"0","host":"'$target_host'","id":"'$uuid'","net":"ws","path":"'$ws_path'","port":"8880","ps":"'$node_name'","tls":"","type":"none","v":"2"}'
+        # 2. 修正显示 (如果 API 没返回中文名，用代码代替)
+        if [[ -z "$country_name" ]]; then country_name="$country_code"; fi
         
-        # Base64 编码并写入
-        echo "vmess://$(echo -n "$vmess_json" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
-    done
-    
-    green "VIP 节点生成完毕！"
+        echo -e "当前定位：${yellow}${flag_emoji} ${country_name}${plain}" && sleep 1
+        # --- 获取位置信息 结束 ---
+        
+        rm -rf /etc/s-box/vm_ws_vip.txt
+
+        # 定义端口列表 (旧版规则)
+        local port_list="443 8443 2053 2083 2087 2096 80 8080 8880 2052 2082 2086 2095"
+        local j_count=1
+
+        for port in $port_list; do
+            # 使用旧版的 dtsm.de5.net 域名逻辑
+            local add_domain="j${j_count}.dtsm.de5.net"
+            
+            # 判断 TLS
+            local tls_status=""
+            if [[ "$port" =~ ^(443|8443|2053|2083|2087|2096)$ ]]; then
+                tls_status="tls"
+            else
+                tls_status=""
+            fi
+
+            # ⚠️ 命名格式：国旗 + 国家名 + 优选 + 端口
+            local ps_name="${flag_emoji} ${country_name} 优选${port}"
+            
+            local vmess_json="{\"add\":\"${add_domain}\",\"aid\":\"0\",\"host\":\"${my_domain}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"${port}\",\"ps\":\"${ps_name}\",\"tls\":\"${tls_status}\",\"sni\":\"${my_domain}\",\"type\":\"none\",\"v\":\"2\"}"
+            
+            echo "vmess://$(echo -n "$vmess_json" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
+            j_count=$((j_count+1))
+        done
+        
+        green "已注入 ${country_name} 优选节点！"
+    fi
 }
 
 # ==========================================
