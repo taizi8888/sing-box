@@ -3318,21 +3318,21 @@ res_custom_vip(){
         fi
 
         # --- 生成 j 节点 ---
-        local add_j="j${i}.dtsm.de5.net"
+        local add_j="j${i}.shdetai.cn"
         # 【👇修改点】 格式改为: 自定义名字-优选端口 j序号
         local ps_j="${hostname}-优选${port} j${i}"
         local json_j="{\"add\":\"${add_j}\",\"aid\":\"0\",\"host\":\"${target_host}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"${port}\",\"ps\":\"${ps_j}\",\"tls\":\"${tls_status}\",\"sni\":\"${target_host}\",\"type\":\"none\",\"v\":\"2\"}"
         echo "vmess://$(echo -n "$json_j" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
 
         # --- 生成 d 节点 ---
-        local add_d="d${i}.dtsm.de5.net"
+        local add_d="d${i}.shdetai.cn"
         # 【👇修改点】 格式改为: 自定义名字-优选端口 d序号
         local ps_d="${hostname}-优选${port} d${i}"
         local json_d="{\"add\":\"${add_d}\",\"aid\":\"0\",\"host\":\"${target_host}\",\"id\":\"${my_uuid}\",\"net\":\"ws\",\"path\":\"${my_path}\",\"port\":\"${port}\",\"ps\":\"${ps_d}\",\"tls\":\"${tls_status}\",\"sni\":\"${target_host}\",\"type\":\"none\",\"v\":\"2\"}"
         echo "vmess://$(echo -n "$json_d" | base64 -w 0)" >> /etc/s-box/vm_ws_vip.txt
     done
     
-    green "已注入 VIP 节点: 地址已修正为 dtsm.de5.net，Host已修正为 $target_host"
+    green "已注入 VIP 节点: 地址已修正为 shdetai.cn，Host已修正为 $target_host"
 }
 
 # ==========================================
